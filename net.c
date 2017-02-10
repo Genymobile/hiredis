@@ -64,6 +64,15 @@
 #include "net.h"
 #include "sds.h"
 
+#ifdef _WIN32
+    #define SETERRNO errnox = WSAGetLastError()
+    #undef errno
+    int errnox = EINPROGRESS;
+    #define errno errnox
+#else
+    #define SETERRNO
+#endif
+
 /* Defined in hiredis.c */
 void __redisSetError(redisContext *c, int type, const char *str);
 
@@ -120,7 +129,7 @@ static int redisSetBlocking(redisContext *c, int blocking) {
     iResult = ioctlsocket(c->fd, FIONBIO, &flag);
     if (iResult != NO_ERROR)
     {
-        errno = WSAGetLastError();
+        SETERRNO;
         __redisSetErrorFromErrno(c,REDIS_ERR_IO,"fcntl(F_SETFL)");
         redisContextCloseFd(c->fd);
         return REDIS_ERR;
@@ -232,7 +241,7 @@ static int redisContextWaitReady(redisContext *c, const struct timeval *timeout)
        FD_ZERO(&wfd);
        FD_SET(c->fd, &wfd);
        if (select(FD_SETSIZE, NULL, &wfd, NULL, &toptr) == -1) {
-           errno = WSAGetLastError();
+           SETERRNO;
            __redisSetErrorFromErrno(c,REDIS_ERR_IO,"select(2)");
            redisContextCloseFd(c);
            return REDIS_ERR;
@@ -412,6 +421,7 @@ addrretry:
             }
         }
         if (connect(s,p->ai_addr,p->ai_addrlen) == -1) {
+            SETERRNO;
             if (errno == EHOSTUNREACH) {
                 redisContextCloseFd(c);
                 continue;
