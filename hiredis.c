@@ -658,7 +658,7 @@ int redisReconnect(redisContext *c) {
         return redisContextConnectBindTcp(c, c->tcp.host, c->tcp.port,
                 c->timeout, c->tcp.source_addr);
     } else if (c->connection_type == REDIS_CONN_UNIX) {
-        return redisContextConnectUnix(c, c->unix_sock.path, c->timeout);
+        __redisSetError(c,REDIS_ERR,"Unix connection not available");
     } else {
         /* Something bad happened here and shouldn't have. There isn't
            enough information in the context to reconnect. */
@@ -724,6 +724,7 @@ redisContext *redisConnectBindNonBlockWithReuse(const char *ip, int port,
     return c;
 }
 
+#ifndef _WIN32
 redisContext *redisConnectUnix(const char *path) {
     redisContext *c;
 
@@ -759,6 +760,7 @@ redisContext *redisConnectUnixNonBlock(const char *path) {
     redisContextConnectUnix(c,path,NULL);
     return c;
 }
+#endif
 
 redisContext *redisConnectFd(int fd) {
     redisContext *c;

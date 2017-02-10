@@ -184,6 +184,7 @@ redisAsyncContext *redisAsyncConnectBindWithReuse(const char *ip, int port,
     return ac;
 }
 
+#ifndef _WIN32
 redisAsyncContext *redisAsyncConnectUnix(const char *path) {
     redisContext *c;
     redisAsyncContext *ac;
@@ -201,6 +202,7 @@ redisAsyncContext *redisAsyncConnectUnix(const char *path) {
     __redisAsyncCopyError(ac);
     return ac;
 }
+#endif
 
 int redisAsyncSetConnectCallback(redisAsyncContext *ac, redisConnectCallback *fn) {
     if (ac->onConnect == NULL) {
