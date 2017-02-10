@@ -206,13 +206,7 @@ static int redisSetTcpNoDelay(redisContext *c) {
 #define __MAX_MSEC (((LONG_MAX) - 999) / 1000)
 
 static int redisContextWaitReady(redisContext *c, const struct timeval *timeout) {
-    struct pollfd   wfd[1];
-    long msec;
-
-    msec          = -1;
-    wfd[0].fd     = c->fd;
-    wfd[0].events = POLLOUT;
-
+    long msec          = -1;
     /* Only use timeout when not NULL. */
     if (timeout != NULL) {
         if (timeout->tv_usec > 1000000 || timeout->tv_sec > __MAX_MSEC) {
@@ -227,6 +221,35 @@ static int redisContextWaitReady(redisContext *c, const struct timeval *timeout)
             msec = INT_MAX;
         }
     }
+#ifdef _WIN32
+    fd_set wfd;
+    struct timeval toptr = {15, 0};
+    if (timeout != NULL) {
+        toptr.tv_sec = timeout->tv_sec;
+        toptr.tv_usec = timeout->tv_usec;
+    }
+    if (errno == EINPROGRESS || errno == WSAEWOULDBLOCK) {
+       FD_ZERO(&wfd);
+       FD_SET(c->fd, &wfd);
+       if (select(FD_SETSIZE, NULL, &wfd, NULL, &toptr) == -1) {
+           errno = WSAGetLastError();
+           __redisSetErrorFromErrno(c,REDIS_ERR_IO,"select(2)");
+           redisContextCloseFd(c);
+           return REDIS_ERR;
+       }
+       if (!FD_ISSET(c->fd, &wfd)) {
+            errno = WSAETIMEDOUT;
+           __redisSetErrorFromErrno(c,REDIS_ERR_IO,NULL);
+           close(c->fd);
+           return REDIS_ERR;
+       }
+       if (redisCheckSocketError(c) != REDIS_OK)
+           return REDIS_ERR;
+    }
+#else
+    struct pollfd   wfd[1];
+    wfd[0].fd     = c->fd;
+    wfd[0].events = POLLOUT;
 
     if (errno == EINPROGRESS) {
         int res;
@@ -247,7 +270,7 @@ static int redisContextWaitReady(redisContext *c, const struct timeval *timeout)
 
         return REDIS_OK;
     }
-
+#endif
     __redisSetErrorFromErrno(c,REDIS_ERR_IO,NULL);
     redisContextCloseFd(c);
     return REDIS_ERR;
