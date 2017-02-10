@@ -43,6 +43,16 @@
 #include "net.h"
 #include "sds.h"
 
+#ifdef _WIN32
+    #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+    #endif
+    #include <windows.h>
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <windows.h>
+#endif
+
 static redisReply *createReplyObject(int type);
 static void *createStringObject(const redisReadTask *task, char *str, size_t len);
 static void *createArrayObject(const redisReadTask *task, int elements);
@@ -617,7 +627,11 @@ void redisFree(redisContext *c) {
     if (c == NULL)
         return;
     if (c->fd > 0)
+#ifdef _WIN32
+        closesocket(c->fd);
+#else
         close(c->fd);
+#endif
     if (c->obuf != NULL)
         sdsfree(c->obuf);
     if (c->reader != NULL)
@@ -801,7 +815,11 @@ int redisBufferRead(redisContext *c) {
     if (c->err)
         return REDIS_ERR;
 
+#if _WIN32
+    nread = recv(c->fd,buf,sizeof(buf), 0);
+#else
     nread = read(c->fd,buf,sizeof(buf));
+#endif
     if (nread == -1) {
         if ((errno == EAGAIN && !(c->flags & REDIS_BLOCK)) || (errno == EINTR)) {
             /* Try again later */
@@ -838,7 +856,11 @@ int redisBufferWrite(redisContext *c, int *done) {
         return REDIS_ERR;
 
     if (sdslen(c->obuf) > 0) {
+#if _WIN32
+        nwritten = send(c->fd,c->obuf,sdslen(c->obuf), 0);
+#else
         nwritten = write(c->fd,c->obuf,sdslen(c->obuf));
+#endif
         if (nwritten == -1) {
             if ((errno == EAGAIN && !(c->flags & REDIS_BLOCK)) || (errno == EINTR)) {
                 /* Try again later */

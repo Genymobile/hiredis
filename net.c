@@ -34,20 +34,30 @@
 
 #include "fmacros.h"
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <sys/un.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
+#ifdef _WIN32
+   #ifndef WIN32_LEAN_AND_MEAN
+   #define WIN32_LEAN_AND_MEAN
+   #endif
+   #include <windows.h>
+   #include <winsock2.h>
+   #include <ws2tcpip.h>
+#else
+   #include <sys/socket.h>
+   #include <sys/select.h>
+   #include <sys/un.h>
+   #include <netinet/in.h>
+   #include <netinet/tcp.h>
+   #include <arpa/inet.h>
+   #include <netdb.h>
+   #include <poll.h>
+#endif
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <netdb.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <poll.h>
+
 #include <limits.h>
 #include <stdlib.h>
 
