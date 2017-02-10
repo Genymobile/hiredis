@@ -6,7 +6,7 @@
 OBJ=net.o hiredis.o sds.o async.o read.o
 EXAMPLES=hiredis-example
 TESTS=hiredis-test
-LIBNAME=libhiredis
+LIBNAME=hiredis
 PKGCONFNAME=hiredis.pc
 
 HIREDIS_MAJOR=$(shell grep HIREDIS_MAJOR hiredis.h | awk '{print $$3}')
@@ -38,18 +38,19 @@ export REDIS_TEST_CONFIG
 # Fallback to gcc when $CC is not in $PATH.
 CC:=$(shell sh -c 'type $(CC) >/dev/null 2>/dev/null && echo $(CC) || echo gcc')
 CXX:=$(shell sh -c 'type $(CXX) >/dev/null 2>/dev/null && echo $(CXX) || echo g++')
+LDFLAGS=-lws2_32
 OPTIMIZATION?=-O3
 WARNINGS=-Wall -W -Wstrict-prototypes -Wwrite-strings
 DEBUG?= -g -ggdb
 REAL_CFLAGS=$(OPTIMIZATION) -fPIC $(CFLAGS) $(WARNINGS) $(DEBUG) $(ARCH)
 REAL_LDFLAGS=$(LDFLAGS) $(ARCH)
 
-DYLIBSUFFIX=so
+DYLIBSUFFIX=dll
 STLIBSUFFIX=a
 DYLIB_MINOR_NAME=$(LIBNAME).$(DYLIBSUFFIX).$(HIREDIS_SONAME)
 DYLIB_MAJOR_NAME=$(LIBNAME).$(DYLIBSUFFIX).$(HIREDIS_MAJOR)
 DYLIBNAME=$(LIBNAME).$(DYLIBSUFFIX)
-DYLIB_MAKE_CMD=$(CC) -shared -Wl,-soname,$(DYLIB_MINOR_NAME) -o $(DYLIBNAME) $(LDFLAGS)
+DYLIB_MAKE_CMD=$(CC) -shared -Wl,-soname,$(DYLIB_MINOR_NAME) -o $(DYLIBNAME)
 STLIBNAME=$(LIBNAME).$(STLIBSUFFIX)
 STLIB_MAKE_CMD=ar rcs $(STLIBNAME)
 
@@ -78,7 +79,7 @@ sds.o: sds.c sds.h
 test.o: test.c fmacros.h hiredis.h read.h sds.h
 
 $(DYLIBNAME): $(OBJ)
-	$(DYLIB_MAKE_CMD) $(OBJ)
+	$(DYLIB_MAKE_CMD) $(OBJ) $(LDFLAGS)
 
 $(STLIBNAME): $(OBJ)
 	$(STLIB_MAKE_CMD) $(OBJ)
@@ -105,6 +106,7 @@ hiredis-example: examples/example.c $(STLIBNAME)
 examples: $(EXAMPLES)
 
 hiredis-test: test.o $(STLIBNAME)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 hiredis-%: %.o $(STLIBNAME)
 	$(CC) $(REAL_CFLAGS) -o $@ $(REAL_LDFLAGS) $< $(STLIBNAME)
