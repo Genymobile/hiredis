@@ -4,7 +4,7 @@
 # This file is released under the BSD license, see the COPYING file
 
 OBJ=net.o hiredis.o sds.o async.o read.o
-EXAMPLES=hiredis-example hiredis-example-libevent hiredis-example-libev hiredis-example-glib
+EXAMPLES=hiredis-example
 TESTS=hiredis-test
 LIBNAME=libhiredis
 PKGCONFNAME=hiredis.pc
@@ -85,40 +85,6 @@ $(STLIBNAME): $(OBJ)
 
 dynamic: $(DYLIBNAME)
 static: $(STLIBNAME)
-
-# Binaries:
-hiredis-example-libevent: examples/example-libevent.c adapters/libevent.h $(STLIBNAME)
-	$(CC) -o examples/$@ $(REAL_CFLAGS) $(REAL_LDFLAGS) -I. $< -levent $(STLIBNAME)
-
-hiredis-example-libev: examples/example-libev.c adapters/libev.h $(STLIBNAME)
-	$(CC) -o examples/$@ $(REAL_CFLAGS) $(REAL_LDFLAGS) -I. $< -lev $(STLIBNAME)
-
-hiredis-example-glib: examples/example-glib.c adapters/glib.h $(STLIBNAME)
-	$(CC) -o examples/$@ $(REAL_CFLAGS) $(REAL_LDFLAGS) $(shell pkg-config --cflags --libs glib-2.0) -I. $< $(STLIBNAME)
-
-hiredis-example-ivykis: examples/example-ivykis.c adapters/ivykis.h $(STLIBNAME)
-	$(CC) -o examples/$@ $(REAL_CFLAGS) $(REAL_LDFLAGS) -I. $< -livykis $(STLIBNAME)
-
-hiredis-example-macosx: examples/example-macosx.c adapters/macosx.h $(STLIBNAME)
-	$(CC) -o examples/$@ $(REAL_CFLAGS) $(REAL_LDFLAGS) -I. $< -framework CoreFoundation $(STLIBNAME)
-
-ifndef AE_DIR
-hiredis-example-ae:
-	@echo "Please specify AE_DIR (e.g. <redis repository>/src)"
-	@false
-else
-hiredis-example-ae: examples/example-ae.c adapters/ae.h $(STLIBNAME)
-	$(CC) -o examples/$@ $(REAL_CFLAGS) $(REAL_LDFLAGS) -I. -I$(AE_DIR) $< $(AE_DIR)/ae.o $(AE_DIR)/zmalloc.o $(AE_DIR)/../deps/jemalloc/lib/libjemalloc.a -pthread $(STLIBNAME)
-endif
-
-ifndef LIBUV_DIR
-hiredis-example-libuv:
-	@echo "Please specify LIBUV_DIR (e.g. ../libuv/)"
-	@false
-else
-hiredis-example-libuv: examples/example-libuv.c adapters/libuv.h $(STLIBNAME)
-	$(CC) -o examples/$@ $(REAL_CFLAGS) $(REAL_LDFLAGS) -I. -I$(LIBUV_DIR)/include $< $(LIBUV_DIR)/.libs/libuv.a -lpthread -lrt $(STLIBNAME)
-endif
 
 ifeq ($(and $(QT_MOC),$(QT_INCLUDE_DIR),$(QT_LIBRARY_DIR)),)
 hiredis-example-qt:
