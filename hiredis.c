@@ -602,6 +602,18 @@ redisReader *redisReaderCreate(void) {
 static redisContext *redisContextInit(void) {
     redisContext *c;
 
+#ifdef _WIN32
+    /* fireup Windows socket stuff */
+    WORD wVersionRequested = MAKEWORD(2, 0);
+    WSADATA wsaData;
+    int ret;
+    ret = WSAStartup(wVersionRequested, &wsaData);
+    if (ret != 0) {
+        fprintf(stderr, "error: WSAStartup() failed: %d\n", ret);
+        return NULL;
+    }
+#endif
+
     c = calloc(1,sizeof(redisContext));
     if (c == NULL)
         return NULL;
