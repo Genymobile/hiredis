@@ -734,9 +734,6 @@ int main(int argc, char **argv) {
     int throughput = 1;
     int test_inherit_fd = 1;
 
-    /* Ignore broken pipe signal (for I/O error tests). */
-    signal(SIGPIPE, SIG_IGN);
-
     /* Parse command line options. */
     argv++; argc--;
     while (argc) {
