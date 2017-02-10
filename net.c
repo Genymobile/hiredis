@@ -110,6 +110,22 @@ static int redisCreateSocket(redisContext *c, int type) {
 }
 
 static int redisSetBlocking(redisContext *c, int blocking) {
+#ifdef _WIN32
+    int iResult;
+    unsigned long flag;
+    if (blocking)
+        flag = 0;
+    else
+        flag = 1;
+    iResult = ioctlsocket(c->fd, FIONBIO, &flag);
+    if (iResult != NO_ERROR)
+    {
+        errno = WSAGetLastError();
+        __redisSetErrorFromErrno(c,REDIS_ERR_IO,"fcntl(F_SETFL)");
+        redisContextCloseFd(c->fd);
+        return REDIS_ERR;
+    }
+#else
     int flags;
 
     /* Set the socket nonblocking.
@@ -131,6 +147,7 @@ static int redisSetBlocking(redisContext *c, int blocking) {
         redisContextCloseFd(c);
         return REDIS_ERR;
     }
+#endif
     return REDIS_OK;
 }
 
