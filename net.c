@@ -69,7 +69,7 @@ void __redisSetError(redisContext *c, int type, const char *str);
 
 static void redisContextCloseFd(redisContext *c) {
     if (c && c->fd >= 0) {
-        close(c->fd);
+        closesocket(c->fd);
         c->fd = -1;
     }
 }
@@ -240,7 +240,7 @@ static int redisContextWaitReady(redisContext *c, const struct timeval *timeout)
        if (!FD_ISSET(c->fd, &wfd)) {
             errno = WSAETIMEDOUT;
            __redisSetErrorFromErrno(c,REDIS_ERR_IO,NULL);
-           close(c->fd);
+           closesocket(c->fd);
            return REDIS_ERR;
        }
        if (redisCheckSocketError(c) != REDIS_OK)
