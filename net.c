@@ -238,22 +238,22 @@ static int redisContextWaitReady(redisContext *c, const struct timeval *timeout)
         toptr.tv_usec = timeout->tv_usec;
     }
     if (errno == EINPROGRESS || errno == WSAEWOULDBLOCK) {
-       FD_ZERO(&wfd);
-       FD_SET(c->fd, &wfd);
-       if (select(FD_SETSIZE, NULL, &wfd, NULL, &toptr) == -1) {
-           SETERRNO;
-           __redisSetErrorFromErrno(c,REDIS_ERR_IO,"select(2)");
-           redisContextCloseFd(c);
-           return REDIS_ERR;
-       }
-       if (!FD_ISSET(c->fd, &wfd)) {
+        FD_ZERO(&wfd);
+        FD_SET(c->fd, &wfd);
+        if (select(FD_SETSIZE, NULL, &wfd, NULL, &toptr) == -1) {
+            SETERRNO;
+            __redisSetErrorFromErrno(c,REDIS_ERR_IO,"select(2)");
+            redisContextCloseFd(c);
+            return REDIS_ERR;
+        }
+        if (!FD_ISSET(c->fd, &wfd)) {
             errno = WSAETIMEDOUT;
-           __redisSetErrorFromErrno(c,REDIS_ERR_IO,NULL);
-           closesocket(c->fd);
-           return REDIS_ERR;
-       }
-       if (redisCheckSocketError(c) != REDIS_OK)
-           return REDIS_ERR;
+            __redisSetErrorFromErrno(c,REDIS_ERR_IO,NULL);
+            closesocket(c->fd);
+            return REDIS_ERR;
+        }
+        if (redisCheckSocketError(c) != REDIS_OK)
+            return REDIS_ERR;
     }
 #else
     struct pollfd   wfd[1];

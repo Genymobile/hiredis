@@ -87,7 +87,7 @@
 /* "regular" POSIX strerror_r that does the right thing. */
 #define __redis_strerror_r(errno, buf, len)                                    \
     do {                                                                       \
-        snprintf(buf, len, "errno %d", errno);                                     \
+        snprintf(buf, len, "errno %d", errno);                                 \
     } while (0)
 #else
 /* "bad" GNU strerror_r we need to clean up after. */
