@@ -97,15 +97,11 @@ static redisContext *connect(struct config config) {
     if (config.type == CONN_TCP) {
         c = redisConnect(config.tcp.host, config.tcp.port);
     } else if (config.type == CONN_UNIX) {
-        c = redisConnectUnix(config.unix.path);
+        printf("Unix connection not supported\n");
+        exit(1);
     } else if (config.type == CONN_FD) {
-        /* Create a dummy connection just to get an fd to inherit */
-        redisContext *dummy_ctx = redisConnectUnix(config.unix.path);
-        if (dummy_ctx) {
-            int fd = disconnect(dummy_ctx, 1);
-            printf("Connecting to inherited fd %d\n", fd);
-            c = redisConnectFd(fd);
-        }
+        printf("Unix connection not supported\n");
+        exit(1);
     } else {
         assert(NULL);
     }
@@ -359,11 +355,6 @@ static void test_blocking_connection_errors(void) {
     c = redisConnect((char*)"localhost", 1);
     test_cond(c->err == REDIS_ERR_IO &&
         strcmp(c->errstr,"Connection refused") == 0);
-    redisFree(c);
-
-    test("Returns error when the unix socket path doesn't accept connections: ");
-    c = redisConnectUnix((char*)"/tmp/idontexist.sock");
-    test_cond(c->err == REDIS_ERR_IO); /* Don't care about the message... */
     redisFree(c);
 }
 
@@ -742,9 +733,6 @@ int main(int argc, char **argv) {
     };
     int throughput = 1;
     int test_inherit_fd = 1;
-
-    /* Ignore broken pipe signal (for I/O error tests). */
-    signal(SIGPIPE, SIG_IGN);
 
     /* Parse command line options. */
     argv++; argc--;
