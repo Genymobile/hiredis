@@ -254,6 +254,8 @@ static int redisContextWaitReady(redisContext *c, const struct timeval *timeout)
         }
         if (redisCheckSocketError(c) != REDIS_OK)
             return REDIS_ERR;
+
+        return REDIS_OK;
     }
 #else
     struct pollfd   wfd[1];
