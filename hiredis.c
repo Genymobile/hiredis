@@ -833,7 +833,13 @@ int redisBufferRead(redisContext *c) {
     nread = read(c->fd,buf,sizeof(buf));
 #endif
     if (nread == -1) {
+
+#if _WIN32
+        errno = WSAGetLastError();
+        if (errno == WSAEINPROGRESS || errno == WSAEWOULDBLOCK) {
+#else
         if ((errno == EAGAIN && !(c->flags & REDIS_BLOCK)) || (errno == EINTR)) {
+#endif
             /* Try again later */
         } else {
             __redisSetError(c,REDIS_ERR_IO,NULL);
