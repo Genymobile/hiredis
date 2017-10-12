@@ -232,7 +232,7 @@ static int redisContextWaitReady(redisContext *c, const struct timeval *timeout)
     }
 #ifdef _WIN32
     fd_set wfd;
-    struct timeval toptr = {15, 0};
+    struct timeval toptr = {5, 0};
     if (timeout != NULL) {
         toptr.tv_sec = timeout->tv_sec;
         toptr.tv_usec = timeout->tv_usec;
